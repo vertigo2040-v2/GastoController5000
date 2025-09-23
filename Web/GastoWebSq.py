@@ -3,7 +3,7 @@ import pandas as pd
 import sqlite3
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
-
+#streamlit run GastoWebSq.py 
 # Nombre de la base de datos
 DB_FILE = 'expenses.db'
 
