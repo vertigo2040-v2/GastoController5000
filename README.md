@@ -41,4 +41,4 @@ pip install -r desktop/requirements-desktop.txt
 ```bash
 pip install -r desktop/requirements-desktop.txt
 
-+ pip install -r web/requirements-web.txt
++ pip install -r web/requirements-web.txtdffsf
