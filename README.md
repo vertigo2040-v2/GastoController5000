@@ -1,4 +1,4 @@
-# 📊 Expense Tracker
+# 📊 GASTOCONTROLLER5000
 
 Una aplicación sencilla pero poderosa para gestionar y visualizar tus gastos personales. Disponible en dos versiones:
 
@@ -37,6 +37,8 @@ Ambas versiones requieren **Python 3.8 o superior**.
 ```bash
 pip install -r desktop/requirements-desktop.txt
 
-### Para la versión Desktop:
+    ### Para la versión Desktop:
 ```bash
-pip install -r web/requirements-web.txt
+pip install -r desktop/requirements-desktop.txt
+
++ pip install -r web/requirements-web.txt
