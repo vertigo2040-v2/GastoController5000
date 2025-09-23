@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-
+#Para iniciar le parte web
+#streamlit run GastoWeb.py 
 CSV_FILE = 'expenses.csv'
 
 # Función para cargar gastos
