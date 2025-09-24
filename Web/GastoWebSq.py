@@ -72,43 +72,43 @@ def group_by_period(df, period='Mensual'):
 init_db()
 
 # Cargar datos en session_state
-if 'expenses_df' not in st.session_state:
+if 'expenses_df' not in st.session_state: #comprobar si existe la 
     st.session_state.expenses_df = load_expenses()
 
 # Categorías predefinidas
 CATEGORIES = ["Consumo diario", "Ocio", "Transporte", "Salud", "Educación"]
 
 # Título
-st.title("📊 Expense Tracker Pro (SQLite Edition)")
+st.title("📊 GASTOCONTROLLER5000")
 
 # Formulario para agregar gasto
-st.header("➕ Add New Expense")
+st.header("➕ Ingresar un nuevo gasto")
 with st.form("expense_form"):
     col1, col2 = st.columns(2)
     with col1:
         product = st.text_input("Product", placeholder="Ej. Café, Gasolina...")
     with col2:
-        category = st.selectbox("Category", options=CATEGORIES)
+        category = st.selectbox("Categoria", options=CATEGORIES)
 
     col3, col4 = st.columns(2)
     with col3:
-        amount = st.number_input("Amount", min_value=0.0, step=0.01, format="%.2f")
+        amount = st.number_input("Valor(Q)", min_value=0.0, step=0.01, format="%.2f")
     with col4:
-        date = st.date_input("Date", value=datetime.today())
+        date = st.date_input("Fecha", value=datetime.today())
 
-    submitted = st.form_submit_button("💾 Save Expense")
+    submitted = st.form_submit_button("💾 Guardar gasto")
     if submitted:
         if product and amount > 0:
             save_expense(product, category, amount, str(date))
             st.session_state.expenses_df = load_expenses()  # Recargar
-            st.success("✅ Expense saved!")
+            st.success("✅ Gasto guardado!")
         else:
-            st.warning("⚠️ Please fill product and amount.")
+            st.warning("⚠️ Por favor, complete el producto y el monto.")
 
 st.markdown("---")
 
 # Filtros de consulta
-st.header("🔍 Filter & Analyze")
+st.header("🔍 Filtrar y Analizar")
 
 # Fechas por defecto: último mes
 today = datetime.today()

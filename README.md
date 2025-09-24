@@ -37,8 +37,8 @@ Ambas versiones requieren **Python 3.8 o superior**.
 ```bash
 pip install -r desktop/requirements-desktop.txt
 
-    ### Para la versión Desktop:
+---
+    
+### Para la versión Web:
 ```bash
-pip install -r desktop/requirements-desktop.txt
-
-+ pip install -r web/requirements-web.txtdffsf
+pip install -r web/requirements-web.txt
