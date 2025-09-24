@@ -4,7 +4,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import pandas as pd
 import os
 
-# GatoController5000
+# GastoController5000
 CSV_FILE = 'expenses.csv'
 
 def load_expenses():
