@@ -3,7 +3,7 @@ import pandas as pd
 import sqlite3
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
-#streamlit run GastoWebSq.py 
+
 # Nombre de la base de datos
 DB_FILE = 'expenses.db'
 
@@ -23,8 +23,8 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Cargar todos los gastos
-def load_expenses():
+# Cargar todos los gastos (sin filtros)
+def load_all_expenses():
     conn = sqlite3.connect(DB_FILE)
     df = pd.read_sql_query("SELECT * FROM expenses", conn)
     conn.close()
@@ -71,44 +71,95 @@ def group_by_period(df, period='Mensual'):
 # Inicializar DB
 init_db()
 
-# Cargar datos en session_state
-if 'expenses_df' not in st.session_state:
-    st.session_state.expenses_df = load_expenses()
+# Cargar todos los gastos una vez (para gráfica global)
+all_expenses_df = load_all_expenses()
 
 # Categorías predefinidas
 CATEGORIES = ["Consumo diario", "Ocio", "Transporte", "Salud", "Educación"]
 
 # Título
-st.title("📊 Expense Tracker Pro (SQLite Edition)")
+st.title("📊 GASTOCONTROLLER5000")
 
 # Formulario para agregar gasto
-st.header("➕ Add New Expense")
-with st.form("expense_form"):
+st.header("➕ Agregar Nuevo Gasto")
+if 'product_input' not in st.session_state:
+    st.session_state.product_input = ""
+if 'category_input' not in st.session_state:
+    st.session_state.category_input = CATEGORIES[0]
+if 'amount_input' not in st.session_state:
+    st.session_state.amount_input = 0.0
+if 'date_input' not in st.session_state:
+    st.session_state.date_input = datetime.today().date()
+
+with st.form("Formulario de Gasto"):
     col1, col2 = st.columns(2)
     with col1:
-        product = st.text_input("Product", placeholder="Ej. Café, Gasolina...")
+        product = st.text_input(
+            "Producto", 
+            value=st.session_state.product_input,
+            placeholder="Ej. Café, Gasolina...",
+            key="product_widget"  # Opcional, pero bueno para claridad
+        )
     with col2:
-        category = st.selectbox("Category", options=CATEGORIES)
+        category = st.selectbox(
+            "Categoría", 
+            options=CATEGORIES,
+            index=CATEGORIES.index(st.session_state.category_input) if st.session_state.category_input in CATEGORIES else 0,
+            key="category_widget"
+        )
 
     col3, col4 = st.columns(2)
     with col3:
-        amount = st.number_input("Amount", min_value=0.0, step=0.01, format="%.2f")
+        amount = st.number_input(
+            "Monto", 
+            min_value=0.0, 
+            step=0.01, 
+            format="%.2f",
+            value=st.session_state.amount_input,
+            key="amount_widget"
+        )
     with col4:
-        date = st.date_input("Date", value=datetime.today())
+        date = st.date_input(
+            "Fecha", 
+            value=st.session_state.date_input,
+            key="date_widget"
+        )
 
-    submitted = st.form_submit_button("💾 Save Expense")
+    submitted = st.form_submit_button("💾 Guardar")
     if submitted:
         if product and amount > 0:
             save_expense(product, category, amount, str(date))
-            st.session_state.expenses_df = load_expenses()  # Recargar
-            st.success("✅ Expense saved!")
+            # Recargar datos globales después de guardar
+           
+            all_expenses_df = load_all_expenses()
+            # ✅ LIMPIAR LOS CAMPOS: restablecer session_state
+            st.session_state.product_input = ""
+            st.session_state.category_input = CATEGORIES[0]
+            st.session_state.amount_input = 0.0
+            st.session_state.date_input = datetime.today().date()
+            st.success("✅ Gasto guardado!")
+            st.rerun()  # Esto asegura que los campos se limpien visualmente
         else:
-            st.warning("⚠️ Please fill product and amount.")
+            st.warning("⚠️ Por favor, complete el producto y el monto.")
 
 st.markdown("---")
 
-# Filtros de consulta
-st.header("🔍 Filter & Analyze")
+# 🥧 Gráfica de pastel: TOTAL DE TODOS LOS TIEMPOS (sin filtros)
+st.subheader("🥧 Distribución Total de Gastos por Categoría")
+if not all_expenses_df.empty:
+    category_totals = all_expenses_df.groupby('category')['amount'].sum()
+    fig_pie, ax_pie = plt.subplots(figsize=(6, 6))
+    ax_pie.pie(category_totals, labels=category_totals.index, autopct='%1.1f%%', startangle=140)
+    ax_pie.set_title("Distribución Global (Todo el historial)")
+    ax_pie.axis('equal')
+    st.pyplot(fig_pie)
+else:
+    st.info("No hay datos históricos para mostrar.")
+
+st.markdown("---")
+
+# 🔍 Filtros y análisis temporal (solo aquí usamos filtros)
+st.header("🔍 Análisis Temporal (por fechas)")
 
 # Fechas por defecto: último mes
 today = datetime.today()
@@ -116,59 +167,43 @@ default_start = (today - timedelta(days=30)).date()
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    start_date = st.date_input("Start Date", value=default_start)
+    start_date = st.date_input("Fecha de inicio", value=default_start)
 with col2:
-    end_date = st.date_input("End Date", value=today.date())
+    end_date = st.date_input("Fecha de fin", value=today.date())
 with col3:
-    selected_category = st.selectbox("Category Filter", options=["Todas"] + CATEGORIES)
+    selected_category = st.selectbox("Filtro de categoría", options=["Todas"] + CATEGORIES)
 
 # Botón para aplicar filtro
-if st.button("📊 Update Charts"):
+if st.button("📊 Actualizar Gráficos Temporales"):
     filtered_df = filter_expenses(str(start_date), str(end_date), selected_category if selected_category != "Todas" else None)
 else:
     # Por defecto: último mes, todas las categorías
     filtered_df = filter_expenses(str(default_start), str(today.date()), None)
 
 # Selector de periodo
-period = st.radio("📈 Group by period:", ["Semanal", "Mensual", "Anual"], horizontal=True)
+period = st.radio("📈 Agrupar por periodo:", ["Semanal", "Mensual", "Anual"], horizontal=True)
 
-# Gráficos
-st.subheader("📉 Expenses Over Time (Bar Chart)")
+# Gráfico de barras temporal
+st.subheader("📉 Gastos a lo largo del tiempo (Gráfico de Barras)")
 if not filtered_df.empty:
     grouped_df = group_by_period(filtered_df, period)
-    fig1, ax1 = plt.subplots(figsize=(10, 5))
-    grouped_df.plot(kind='bar', stacked=True, ax=ax1)
-    ax1.set_title(f"Expenses by {period}")
-    ax1.set_ylabel("Amount ($)")
-    ax1.legend(title="Category")
+    fig_bar, ax_bar = plt.subplots(figsize=(10, 5))
+    grouped_df.plot(kind='bar', stacked=True, ax=ax_bar)
+    ax_bar.set_title(f"Gastos por {period} (Filtrado)")
+    ax_bar.set_ylabel("Monto (Q)")
+    ax_bar.legend(title="Categoría")
     plt.xticks(rotation=45)
-    st.pyplot(fig1)
+    st.pyplot(fig_bar)
 else:
-    st.info("No data to display for selected filters.")
+    st.info("No hay datos para mostrar con los filtros seleccionados.")
 
-st.subheader("🥧 Expense Distribution by Category (Pie Chart)")
-if not filtered_df.empty:
-    category_totals = filtered_df.groupby('category')['amount'].sum()
-    fig2, ax2 = plt.subplots(figsize=(6, 6))
-    ax2.pie(category_totals, labels=category_totals.index, autopct='%1.1f%%', startangle=140)
-    ax2.set_title("Category Distribution")
-    ax2.axis('equal')
-    st.pyplot(fig2)
-else:
-    st.info("No category data to display.")
-
-st.markdown("---")
-
-# Tabla de datos filtrados
-st.header("📋 Filtered Expenses")
+# Tabla y métricas del análisis temporal
+st.header("📋 Gastos Filtrados (Análisis Temporal)")
 if not filtered_df.empty:
     st.dataframe(filtered_df[['product', 'category', 'amount', 'date']].reset_index(drop=True))
-else:
-    st.write("No expenses match the selected filters.")
-
-# Estadísticas rápidas
-if not filtered_df.empty:
     total = filtered_df['amount'].sum()
     avg = filtered_df['amount'].mean()
-    st.metric("💰 Total Expenses", f"${total:,.2f}")
-    st.metric("📈 Average per Expense", f"${avg:,.2f}")
+    st.metric("💰 Total Gastos (Filtrado)", f"Q{total:,.2f}")
+    st.metric("📈 Promedio por Gasto", f"Q{avg:,.2f}")
+else:
+    st.write("No hay gastos que coincidan con los filtros seleccionados.")
